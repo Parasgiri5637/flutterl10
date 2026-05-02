@@ -1,7 +1,7 @@
 name: flutterl10
 description: A command-line tool that finds static Flutter UI text and moves it into app_en.arb.
 version: 0.1.0
-repository: https://github.com/your-user/flutterl10
+repository: https://github.com/Parasgiri5637/flutterl10
 
 environment:
   sdk: ^3.0.0
@@ -10,7 +10,7 @@ executables:
   flutterl10: flutterl10
 
 dependencies:
-  analyzer: ^12.1.0
+  analyzer: ">=7.4.0 <10.0.0"
   args: ^2.5.0
   path: ^1.9.0
 

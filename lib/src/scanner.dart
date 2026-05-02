@@ -209,9 +209,15 @@ class _UiTextVisitor extends GeneralizingAstVisitor<void> {
     required HitKind kind,
     String? propertyName,
   }) {
+    if (_isAlreadyLocalizedExpression(expression)) return;
+
     final info = _stringInfo(expression);
     if (info != null) {
       if (!_isUiText(info.text)) return;
+      if (expression is! SimpleIdentifier &&
+          !_hasLocalizableLiteral(expression)) {
+        return;
+      }
       hits.add(_hitForExpression(
         expression,
         info,
@@ -402,6 +408,99 @@ class _UiTextVisitor extends GeneralizingAstVisitor<void> {
     return source.substring(expression.offset, expression.end);
   }
 
+  bool _isAlreadyLocalizedExpression(Expression expression) {
+    expression = expression.unParenthesized;
+
+    if (_isLocalizationAccess(expression)) return true;
+
+    if (expression is StringInterpolation) {
+      var hasLocalizationAccess = false;
+      var hasLocalizableLiteral = false;
+      for (final element in expression.elements) {
+        if (element is InterpolationString) {
+          if (_hasLettersOrDigits(element.value)) {
+            hasLocalizableLiteral = true;
+          }
+        } else if (element is InterpolationExpression) {
+          if (_isLocalizationAccess(element.expression)) {
+            hasLocalizationAccess = true;
+          }
+        }
+      }
+      return hasLocalizationAccess && !hasLocalizableLiteral;
+    }
+
+    if (expression is BinaryExpression &&
+        expression.operator.type == TokenType.PLUS) {
+      final parts = _flattenPlusExpression(expression);
+      final hasLocalizationAccess = parts.any(_isLocalizationAccess);
+      final hasLocalizableLiteral = parts.any((part) {
+        final info = _stringInfo(part);
+        return info != null && _hasLettersOrDigits(info.text);
+      });
+      return hasLocalizationAccess && !hasLocalizableLiteral;
+    }
+
+    return false;
+  }
+
+  bool _hasLocalizableLiteral(Expression expression) {
+    expression = expression.unParenthesized;
+
+    if (expression is SimpleStringLiteral) {
+      return _hasLettersOrDigits(expression.value);
+    }
+
+    if (expression is AdjacentStrings) {
+      return expression.strings.any(_hasLocalizableLiteral);
+    }
+
+    if (expression is StringInterpolation) {
+      return expression.elements.whereType<InterpolationString>().any(
+            (element) => _hasLettersOrDigits(element.value),
+          );
+    }
+
+    if (expression is BinaryExpression &&
+        expression.operator.type == TokenType.PLUS) {
+      return _flattenPlusExpression(expression).any(_hasLocalizableLiteral);
+    }
+
+    return false;
+  }
+
+  List<Expression> _flattenPlusExpression(BinaryExpression expression) {
+    final parts = <Expression>[];
+
+    void collect(Expression expression) {
+      expression = expression.unParenthesized;
+      if (expression is BinaryExpression &&
+          expression.operator.type == TokenType.PLUS) {
+        collect(expression.leftOperand);
+        collect(expression.rightOperand);
+      } else {
+        parts.add(expression);
+      }
+    }
+
+    collect(expression);
+    return parts;
+  }
+
+  bool _isLocalizationAccess(Expression expression) {
+    final text = _sourceFor(expression.unParenthesized);
+    return text.contains('AppLocalizations.of(') ||
+        text.contains('.l10nOf') ||
+        text.contains('.l10n.') ||
+        text.contains('context.l10n') ||
+        text.contains('context.loc') ||
+        text.contains('S.of(');
+  }
+
+  bool _hasLettersOrDigits(String text) {
+    return RegExp(r'[A-Za-z0-9]').hasMatch(text);
+  }
+
   Expression? _namedArgument(ArgumentList arguments, String name) {
     for (final argument in arguments.arguments) {
       if (argument is NamedExpression && argument.name.label.name == name) {
@@ -434,6 +533,9 @@ class _UiTextVisitor extends GeneralizingAstVisitor<void> {
   bool _isUiText(String text) {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return false;
+    if (RegExp(r'^[0-9]+(?:[.,][0-9]+)?%?$').hasMatch(trimmed)) {
+      return false;
+    }
     if (trimmed.length == 1 && RegExp(r'^[^\w]$').hasMatch(trimmed)) {
       return false;
     }

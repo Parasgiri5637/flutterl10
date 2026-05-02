@@ -12,12 +12,73 @@ UI expressions with `AppLocalizations.of(context)!` keys.
 After pushing this package to GitHub:
 
 ```bash
-dart pub global activate --source git https://github.com/YOUR_USER/flutterl10.git
+dart pub global activate --source git https://github.com/Parasgiri5637/flutterl10.git
 ```
 
 Make sure Dart's global pub cache is in your `PATH`.
 
 ## Use in a Flutter Project
+
+### 1. Add Flutter l10n support
+
+In your Flutter app's `pubspec.yaml`, add localization dependencies and enable
+code generation:
+
+```yaml
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+
+flutter:
+  generate: true
+```
+
+Then run:
+
+```bash
+flutter pub get
+```
+
+### 2. Add `l10n.yaml`
+
+Create `l10n.yaml` in your Flutter project root:
+
+```yaml
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+```
+
+### 3. Configure `MaterialApp`
+
+Import generated localizations in your app:
+
+```dart
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+```
+
+Add localization delegates and supported locales:
+
+```dart
+MaterialApp(
+  localizationsDelegates: const [
+    AppLocalizations.delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+  ],
+  supportedLocales: const [
+    Locale('en'),
+  ],
+  home: const MyHomePage(),
+)
+```
+
+### 4. Run `flutterl10`
 
 Run these commands from your Flutter app root:
 
@@ -27,6 +88,17 @@ flutterl10 apply
 flutterl10 check
 flutterl10 gen
 ```
+
+Recommended first run:
+
+```bash
+flutterl10 scan
+flutterl10 apply
+flutterl10 check
+```
+
+`apply` creates or updates `lib/l10n/app_en.arb`, replaces static UI text in
+`lib`, and runs `flutter gen-l10n` by default.
 
 ## Commands
 

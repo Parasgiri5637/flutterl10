@@ -7,9 +7,38 @@ It scans Dart files inside a Flutter app's `lib` folder with the Dart analyzer,
 finds visible UI strings, adds them to the English ARB file, and replaces the
 UI expressions with `AppLocalizations.of(context)!` keys.
 
-## Install from GitHub
+## Add from GitHub
 
-After pushing this package to GitHub:
+Add `flutterl10` to your Flutter project's `pubspec.yaml` as a Git dependency:
+
+```yaml
+dev_dependencies:
+  flutterl10:
+    git:
+      url: https://github.com/Parasgiri5637/flutterl10.git
+```
+
+Then run:
+
+```bash
+flutter pub get
+```
+
+Run the tool with `dart run` from your Flutter project root:
+
+```bash
+dart run flutterl10 scan
+dart run flutterl10 apply
+dart run flutterl10 check
+dart run flutterl10 gen
+```
+
+`dev_dependencies` is recommended because this is a development tool. Your app
+does not need `flutterl10` at runtime.
+
+## Optional Global Install
+
+If you want shorter commands, you can activate it globally:
 
 ```bash
 dart pub global activate --source git https://github.com/Parasgiri5637/flutterl10.git
@@ -83,22 +112,30 @@ MaterialApp(
 Run these commands from your Flutter app root:
 
 ```bash
-flutterl10 scan
-flutterl10 apply
-flutterl10 check
-flutterl10 gen
+dart run flutterl10 scan
+dart run flutterl10 apply
+dart run flutterl10 check
+dart run flutterl10 gen
 ```
 
 Recommended first run:
+
+```bash
+dart run flutterl10 scan
+dart run flutterl10 apply
+dart run flutterl10 check
+```
+
+`apply` creates or updates `lib/l10n/app_en.arb`, replaces static UI text in
+`lib`, and runs `flutter gen-l10n` by default.
+
+If you installed globally, you can use the shorter command:
 
 ```bash
 flutterl10 scan
 flutterl10 apply
 flutterl10 check
 ```
-
-`apply` creates or updates `lib/l10n/app_en.arb`, replaces static UI text in
-`lib`, and runs `flutter gen-l10n` by default.
 
 ## Commands
 
